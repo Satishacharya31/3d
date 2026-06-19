@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique user authentication ID" },
+        "email": { "type": "string", "description": "The user's email address" },
+        "displayName": { "type": "string", "description": "The user's display name" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp" }
+      },
+      "required": ["uid", "email", "createdAt", "updatedAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "A chat session representing conversation history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The custom conversation identifier" },
+        "ownerId": { "type": "string", "description": "The UID of the user who owns the conversation" },
+        "title": { "type": "string", "description": "A user-defined or computed title of the conversation" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp" }
+      },
+      "required": ["id", "ownerId", "title", "createdAt", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single message in a conversation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The custom message identifier" },
+        "conversationId": { "type": "string", "description": "The workspace identifier for the conversation" },
+        "ownerId": { "type": "string", "description": "The UID of the user who owns this message" },
+        "role": { "type": "string", "enum": ["user", "model"], "description": "The role of the message author" },
+        "text": { "type": "string", "description": "The text content" },
+        "image": { "type": "string", "description": "The base64 encoded jpeg image representation if present" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Message sending timestamp" }
+      },
+      "required": ["id", "conversationId", "ownerId", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Access to user-specific profile records"
+    },
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Access to specific chat conversations"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Access to specific message list in a conversation"
+    }
+  }
+}
