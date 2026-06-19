@@ -12,6 +12,7 @@ import { UserCircle } from 'lucide-react';
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -49,11 +50,34 @@ export default function App() {
               Sign in to authenticate secure connection.
             </p>
             <button
-              onClick={signInWithGoogle}
+              onClick={async () => {
+                setAuthError(null);
+                try {
+                  await signInWithGoogle();
+                } catch (err: any) {
+                  setAuthError(err?.message || String(err));
+                }
+              }}
               className="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition-opacity active:scale-95"
             >
               AUTHENTICATE
             </button>
+
+            {authError && (
+              <div className="mt-6 bg-red-500/10 border border-red-500/30 text-red-200 rounded-xl p-4 text-xs font-mono text-left w-full space-y-2 backdrop-blur-sm antialiased select-text max-h-56 overflow-y-auto">
+                <p className="font-bold text-red-400">⚠️ Auth Domain Error</p>
+                <p className="opacity-85">This domain ({window.location.hostname}) is not allowed to authenticate under the Firebase project.</p>
+                <div className="space-y-1.5 text-[11px] leading-relaxed">
+                  <p className="font-bold text-white/90">How to Fix:</p>
+                  <ol className="list-decimal list-inside space-y-1.5 opacity-85">
+                    <li>Open the <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" className="underline text-pink-400 hover:text-pink-300">Firebase Console</a></li>
+                    <li>Go to project <span className="font-bold text-pink-300">nuxs-ai</span></li>
+                    <li>Go to Build &rarr; <b>Authentication</b> &rarr; <b>Settings</b> &rarr; <b>Authorized domains</b></li>
+                    <li>Add <code className="bg-white/10 border border-white/10 px-1 py-0.5 rounded text-white select-all">{window.location.hostname}</code></li>
+                  </ol>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </>

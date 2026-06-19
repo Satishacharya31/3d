@@ -22,6 +22,7 @@ export function Chat() {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [micActive, setMicActive] = useState(false);
+  const [isListeningActive, setIsListeningActive] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
@@ -34,6 +35,7 @@ export function Chat() {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const nextStartTimeRef = useRef<number>(0);
   const speakingTimeoutRef = useRef<number | null>(null);
+  const userVoiceTimeoutRef = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll
@@ -189,6 +191,11 @@ export function Chat() {
     if (forceState === false || (forceState === undefined && micActive)) {
       stopAudioCapture();
       setMicActive(false);
+      setIsListeningActive(false);
+      if (userVoiceTimeoutRef.current) {
+        clearTimeout(userVoiceTimeoutRef.current);
+        userVoiceTimeoutRef.current = null;
+      }
     } else {
       if (micActive) return;
       try {
@@ -206,6 +213,25 @@ export function Chat() {
         processor.onaudioprocess = (e) => {
           if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
           const inputData = e.inputBuffer.getChannelData(0);
+          
+          // Calculate volume level (Root Mean Square) for noise floor rejection
+          let sumSquares = 0;
+          for (let i = 0; i < inputData.length; i++) {
+            sumSquares += inputData[i] * inputData[i];
+          }
+          const rms = Math.sqrt(sumSquares / inputData.length);
+          
+          // Voice activation threshold (reject whisper background hum/noise under 0.012)
+          if (rms > 0.012) {
+            setIsListeningActive(true);
+            if (userVoiceTimeoutRef.current) {
+              clearTimeout(userVoiceTimeoutRef.current);
+            }
+            userVoiceTimeoutRef.current = window.setTimeout(() => {
+              setIsListeningActive(false);
+            }, 800); // 800ms of quiet before head returns to normal pose
+          }
+          
           const pcm16 = new Int16Array(inputData.length);
           for (let i = 0; i < inputData.length; i++) {
              pcm16[i] = Math.max(-1, Math.min(1, inputData[i])) * 32767;
@@ -335,7 +361,7 @@ export function Chat() {
       <div className="relative flex-1 flex flex-col overflow-hidden">
         {/* 3D View Background Overlay */}
         <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
-           <Myra3D isSpeaking={isSpeaking} isThinking={isThinking} />
+           <Myra3D isSpeaking={isSpeaking} isThinking={isThinking} isListening={isListeningActive} />
         </div>
 
         {/* Messaging Area */}
