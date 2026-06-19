@@ -25,6 +25,7 @@ export function Chat() {
   const [screenSharing, setScreenSharing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -51,10 +52,28 @@ export function Chat() {
   const connectToLive = async () => {
     if (connected) return;
     setConnecting(true);
+    setError(null);
 
     try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/api/live`);
+      let wsUrl = '';
+      const customWsUrl = (import.meta as any).env?.VITE_WS_URL || '';
+      if (customWsUrl) {
+        if (customWsUrl.startsWith('ws://') || customWsUrl.startsWith('wss://')) {
+          wsUrl = customWsUrl;
+        } else if (customWsUrl.startsWith('http://')) {
+          wsUrl = customWsUrl.replace(/^http:/, 'ws:') + (customWsUrl.endsWith('/api/live') ? '' : '/api/live');
+        } else if (customWsUrl.startsWith('https://')) {
+          wsUrl = customWsUrl.replace(/^https:/, 'wss:') + (customWsUrl.endsWith('/api/live') ? '' : '/api/live');
+        } else {
+          wsUrl = customWsUrl;
+        }
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}/api/live`;
+      }
+
+      console.log("Connecting WebSocket to:", wsUrl);
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       const outputCtx = new AudioContext({ sampleRate: 24000 });
@@ -63,6 +82,13 @@ export function Chat() {
 
       ws.onopen = () => {
         setConnected(true);
+        setConnecting(false);
+        setError(null);
+      };
+
+      ws.onerror = (e) => {
+        console.error("WebSocket connection error:", e);
+        setError("WebSocket connection failed. If you hosted on Vercel, set the VITE_WS_URL environment variable in your Vercel settings to your active Cloud Run/development backend URL (e.g., wss://ais-pre-...asia-southeast1.run.app/api/live).");
         setConnecting(false);
       };
 
@@ -148,6 +174,7 @@ export function Chat() {
       };
     } catch(err) {
       console.error(err);
+      setError(String(err));
       setConnecting(false);
     }
   };
@@ -313,6 +340,15 @@ export function Chat() {
 
         {/* Messaging Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 z-10 relative pointer-events-auto" ref={scrollRef}>
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-200 rounded-xl p-4 text-xs font-mono mb-4 backdrop-blur-sm animate-in fade-in duration-300">
+              <p className="font-bold mb-1">⚠️ Connection Error</p>
+              <p className="opacity-85 leading-relaxed">{error}</p>
+              <p className="mt-2 text-[10px] opacity-60">
+                You can configure this in your Vercel project environment variables (VITE_WS_URL) and rebuild/redeploy your app.
+              </p>
+            </div>
+          )}
           {messages.map((m) => (
             <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[70%] rounded-2xl px-5 py-3 ${m.role === 'user' ? 'bg-white/10 text-white rounded-br-none backdrop-blur-md' : 'bg-pink-500/10 border border-pink-500/20 text-pink-50 rounded-bl-none backdrop-blur-md'}`}>
