@@ -1,10 +1,11 @@
 {
-  "projectId": "fluted-port-lkpr3",
-  "appId": "1:851303987417:web:46e62afca85d1e639826c8",
-  "apiKey": "AIzaSyD3jhorYZaGQzosjjBWNKFVlDux8rufLKc",
-  "authDomain": "fluted-port-lkpr3.firebaseapp.com",
-  "firestoreDatabaseId": "remixed-firestore-database-id",
-  "storageBucket": "fluted-port-lkpr3.firebasestorage.app",
-  "messagingSenderId": "851303987417",
-  "measurementId": ""
+  "projectId": "nuxs-ai",
+  "appId": "1:399386430215:web:3fa54b2d90c00fdfd3d3a2",
+  "apiKey": "AIzaSyDu_C4a_FJo4346x-_mXkSpgoqkU8BfZV8",
+  "authDomain": "nuxs-ai.firebaseapp.com",
+  "databaseURL": "https://nuxs-ai-default-rtdb.firebaseio.com",
+  "storageBucket": "nuxs-ai.firebasestorage.app",
+  "messagingSenderId": "399386430215",
+  "measurementId": "G-P39T9W2LMZ",
+  "firestoreDatabaseId": ""
 }
